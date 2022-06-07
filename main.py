@@ -41,8 +41,27 @@ def findColumn(cur, database_name, table_name):
 
     print('\tColumn count: {:,}'.format(len(rows)))
     return rows
+
+def findIndex(cur, database_name, table_name):
+    sql ='''
+    SELECT INDEX_NAME, COLUMN_NAME
+    FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND INDEX_NAME = 'PRIMARY'
+    UNION ALL
+    (SELECT INDEX_NAME, GROUP_CONCAT(COLUMN_NAME SEPARATOR ', ') as COLUMN_NAME
+    FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND INDEX_NAME != 'PRIMARY'
+    GROUP BY INDEX_NAME
+    ORDER BY NON_UNIQUE ASC, INDEX_NAME ASC, SEQ_IN_INDEX ASC)
+    '''
+
+    cur.execute(sql, [database_name, table_name, database_name, table_name])
+    rows = cur.fetchall()
+
+    print('\tIndex count: {:,}'.format(len(rows)))
+    return rows
     
-def addSheet(wb, table_row, column_rows):
+def addSheet(wb, table_row, column_rows, index_rows):
     ws = wb.copy_worksheet(wb[cell_config['template_sheet_name']])
     ws.title = table_row['TABLE_NAME']
     ws[cell_config['TABLE_ENGLISH_NAME']] = table_row['TABLE_NAME']
@@ -50,6 +69,7 @@ def addSheet(wb, table_row, column_rows):
     ws[cell_config['TABLE_COMMENT']] = table_row['TABLE_COMMENT']
 
     start_column_idx = cell_config['START_COLUMN_INDEX']
+    start_index_idx = cell_config['START_INDEX_INDEX']
     # insert row의 개념이 이하 row를 move하는 개념인데 move시에 병합된 cell이 깨지는 현상 존재
     # ws.insert_rows(start_column_idx + 1, len(column_rows))
     for i, column_row in enumerate(column_rows):
@@ -61,6 +81,17 @@ def addSheet(wb, table_row, column_rows):
         ws[cell_config['IS_NULLABLE'] + str(row_index)] = column_row['IS_NULLABLE']
         ws[cell_config['COLUMN_KEY'] + str(row_index)] = column_row['COLUMN_KEY']
         ws[cell_config['EXTRA'] + str(row_index)] = column_row['EXTRA']
+
+    for i, index_row in enumerate(index_rows):
+        row_index = start_index_idx + i
+        ws[cell_config['INDEX_NUMBER'] + str(row_index)] = (i + 1)
+        ws[cell_config['INDEX_NAME'] + str(row_index)] = index_row['INDEX_NAME']
+        ws[cell_config['COLUMN_NAME'] + str(row_index)] = index_row['COLUMN_NAME']
+        
+        if index_row['INDEX_NAME'] == 'PRIMARY':
+            ws[cell_config['INDEX_TYPE'] + str(row_index)] = '로컬 (PK)'
+        
+        ws[cell_config['COLUMN_NAME_2'] + str(row_index)] = index_row['COLUMN_NAME']
 
 if __name__ == '__main__':
     file_config = config.FILE
@@ -94,10 +125,11 @@ if __name__ == '__main__':
     wb = openpyxl.load_workbook(filename = file_path_output)
     for table_row in table_rows:
         column_rows = findColumn(cursor, database_name, table_row['TABLE_NAME'])
-        print(table_row)
-        print(column_rows)
+        index_rows = findIndex(cursor, database_name, table_row['TABLE_NAME'])
+        # print(table_row)
+        # print(column_rows)
 
-        addSheet(wb, table_row, column_rows)
+        addSheet(wb, table_row, column_rows, index_rows)
 
     wb.remove(wb[cell_config['template_sheet_name']])
     wb.save(file_path_output)

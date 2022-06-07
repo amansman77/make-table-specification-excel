@@ -25,4 +25,10 @@ CELL_INFO = {
     'IS_NULLABLE' : 'F',
     'COLUMN_KEY' : 'G',
     'EXTRA' : 'I',
+    'START_INDEX_INDEX' : 47,
+    'INDEX_NUMBER' : 'B',
+    'INDEX_NAME' : 'C',
+    'COLUMN_NAME' : 'D',
+    'INDEX_TYPE' : 'F',
+    'COLUMN_NAME_2' : 'G'
 }

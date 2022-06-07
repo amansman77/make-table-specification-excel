@@ -20,3 +20,9 @@
 - CELL_INFO['IS_NULLABLE'] : NULL 여부 위치
 - CELL_INFO['COLUMN_KEY'] : 컬럼 키 위치
 - CELL_INFO['EXTRA'] : 기타 정보 위치
+- CELL_INFO['START_INDEX_INDEX'] : 인덱스정보의 시작위치(이하 row의 수는 충분히 확보해야합니다.)
+- CELL_INFO['INDEX_NUMBER'] : 인덱스의 순번 위치
+- CELL_INFO['INDEX_NAME'] : 인덱스명 위치
+- CELL_INFO['COLUMN_NAME'] : 인덱스를 건 컬럼 위치
+- CELL_INFO['INDEX_TYPE'] : 인덱스 유형
+- CELL_INFO['COLUMN_NAME_2'] : 인덱스를 건 컬럼 위치
