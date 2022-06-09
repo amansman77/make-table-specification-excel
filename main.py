@@ -1,3 +1,4 @@
+from ast import If
 import pymysql
 import openpyxl
 import shutil
@@ -30,7 +31,7 @@ def findTable(cur, database_name):
 
 def findColumn(cur, database_name, table_name):
     sql ='''
-    SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE, IFNULL(NUMERIC_PRECISION, CHARACTER_MAXIMUM_LENGTH) AS DATA_LENGTH, IS_NULLABLE, COLUMN_KEY, COLUMN_COMMENT, EXTRA
+    SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE, IFNULL(NUMERIC_PRECISION, CHARACTER_MAXIMUM_LENGTH) AS DATA_LENGTH, IS_NULLABLE, COLUMN_TYPE, COLUMN_KEY, EXTRA, COLUMN_COMMENT
     FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s
     ORDER BY ORDINAL_POSITION ASC
@@ -61,7 +62,72 @@ def findIndex(cur, database_name, table_name):
     print('\tIndex count: {:,}'.format(len(rows)))
     return rows
     
-def addSheet(wb, table_row, column_rows, index_rows):
+def generateCreateTableSql(table_row, column_rows, index_rows):
+    create_table = 'CREATE TABLE `{table_name}`'.format(table_name=table_row['TABLE_NAME'])
+
+    column_sql = ''
+    for i, column_row in enumerate(column_rows):
+        column_name_sql = "`{column_name}`".format(
+            column_name=column_row['COLUMN_NAME']
+        )
+        data_type_sql = column_row['DATA_TYPE'].upper()
+        if column_row['DATA_LENGTH'] is not None:
+            data_type_sql = data_type_sql + '({data_length})'.format(data_length=column_row['DATA_LENGTH'])
+        if 'unsigned' in column_row['COLUMN_TYPE']:
+            data_type_sql = data_type_sql + ' UNSIGNED'
+        null_sql = ''
+        if column_row['IS_NULLABLE'] == 'NO':
+            null_sql = 'NOT NULL'
+        else:
+            null_sql = 'NULL DEFAULT NULL'
+        if 'auto_increment' in column_row['EXTRA']:
+            null_sql = null_sql + ' AUTO_INCREMENT'
+        pk_sql = ''
+        index_sql = ''
+        for i, index_row in enumerate(index_rows):
+            if index_row['INDEX_NAME'] == 'PRIMARY':
+                pk_sql = '    PRIMARY KEY (`{column_name}`) USING BTREE'.format(column_name=index_row['COLUMN_NAME'])
+            else:
+                if len(index_sql) > 0:
+                    index_sql = index_sql + ',\n'
+                index_sql = index_sql + '    INDEX `{index_name}` ({column_name}) USING BTREE'.format(
+                    index_name=index_row['INDEX_NAME'],
+                    column_name=index_row['COLUMN_NAME']
+                )
+
+        if len(column_sql) > 0:
+            column_sql = column_sql + ',\n'
+        column_sql = column_sql + "    {column_name_sql} {data_type_sql} {null_sql}".format(
+            column_name_sql=column_name_sql,
+            data_type_sql=data_type_sql,
+            null_sql=null_sql
+        )
+        if column_row['COLUMN_COMMENT'] is not None and len(column_row['COLUMN_COMMENT']) > 0:
+            column_sql = column_sql + " COMMENT '{column_comment}'".format(column_comment=column_row['COLUMN_COMMENT'])
+
+    # 문서상 띄어쓰기가 기입되어 들여쓰기를 제거함
+    pre_index_sql = '''{create_table} (
+{column_sql},
+{pk_sql}'''.format(
+    create_table=create_table,
+    column_sql=column_sql,
+    pk_sql=pk_sql
+)
+    post_index_sql = '''
+)
+COMMENT='{table_comment}'
+ENGINE=InnoDB;'''.format(
+    table_comment=table_row['TABLE_COMMENT']
+)
+
+    sql = pre_index_sql
+    if len(index_sql) > 0:
+        sql = sql + ',\n' + index_sql
+    sql = sql + post_index_sql
+
+    return sql
+
+def addSheet(wb, table_row, column_rows, index_rows, craete_table_sql):
     ws = wb.copy_worksheet(wb[cell_config['template_sheet_name']])
     ws.title = table_row['TABLE_NAME']
     ws[cell_config['TABLE_ENGLISH_NAME']] = table_row['TABLE_NAME']
@@ -92,6 +158,8 @@ def addSheet(wb, table_row, column_rows, index_rows):
             ws[cell_config['INDEX_TYPE'] + str(row_index)] = '로컬 (PK)'
         
         ws[cell_config['COLUMN_NAME_2'] + str(row_index)] = index_row['COLUMN_NAME']
+
+    ws[cell_config['CREATE_TABLE_SQL']] = craete_table_sql
 
 if __name__ == '__main__':
     file_config = config.FILE
@@ -126,10 +194,11 @@ if __name__ == '__main__':
     for table_row in table_rows:
         column_rows = findColumn(cursor, database_name, table_row['TABLE_NAME'])
         index_rows = findIndex(cursor, database_name, table_row['TABLE_NAME'])
+        craete_table_sql = generateCreateTableSql(table_row, column_rows, index_rows)
         # print(table_row)
         # print(column_rows)
 
-        addSheet(wb, table_row, column_rows, index_rows)
+        addSheet(wb, table_row, column_rows, index_rows, craete_table_sql)
 
     wb.remove(wb[cell_config['template_sheet_name']])
     wb.save(file_path_output)

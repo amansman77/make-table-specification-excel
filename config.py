@@ -30,5 +30,6 @@ CELL_INFO = {
     'INDEX_NAME' : 'C',
     'COLUMN_NAME' : 'D',
     'INDEX_TYPE' : 'F',
-    'COLUMN_NAME_2' : 'G'
+    'COLUMN_NAME_2' : 'G',
+    'CREATE_TABLE_SQL' : 'B54'
 }
