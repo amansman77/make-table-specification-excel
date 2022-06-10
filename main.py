@@ -152,12 +152,12 @@ def addSheet(wb, table_row, column_rows, index_rows, craete_table_sql):
         row_index = start_index_idx + i
         ws[cell_config['INDEX_NUMBER'] + str(row_index)] = (i + 1)
         ws[cell_config['INDEX_NAME'] + str(row_index)] = index_row['INDEX_NAME']
-        ws[cell_config['COLUMN_NAME'] + str(row_index)] = index_row['COLUMN_NAME']
+        ws[cell_config['INDEX_COLUMN_NAME'] + str(row_index)] = index_row['COLUMN_NAME']
         
         if index_row['INDEX_NAME'] == 'PRIMARY':
             ws[cell_config['INDEX_TYPE'] + str(row_index)] = '로컬 (PK)'
         
-        ws[cell_config['COLUMN_NAME_2'] + str(row_index)] = index_row['COLUMN_NAME']
+        ws[cell_config['INDEX_COLUMN_NAME_2'] + str(row_index)] = index_row['COLUMN_NAME']
 
     ws[cell_config['CREATE_TABLE_SQL']] = craete_table_sql
 

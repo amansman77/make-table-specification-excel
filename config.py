@@ -28,8 +28,8 @@ CELL_INFO = {
     'START_INDEX_INDEX' : 47,
     'INDEX_NUMBER' : 'B',
     'INDEX_NAME' : 'C',
-    'COLUMN_NAME' : 'D',
+    'INDEX_COLUMN_NAME' : 'D',
     'INDEX_TYPE' : 'F',
-    'COLUMN_NAME_2' : 'G',
+    'INDEX_COLUMN_NAME_2' : 'G',
     'CREATE_TABLE_SQL' : 'B54'
 }
