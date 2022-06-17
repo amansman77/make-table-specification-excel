@@ -20,6 +20,7 @@ CELL_INFO = {
     'START_COLUMN_INDEX' : 8,
     'COLUMN_NUMBER' : 'A',
     'COLUMN_NAME' : 'B',
+    'COLUMN_NAME_KOREAN' : 'C',
     'DATA_TYPE' : 'D',
     'DATA_LENGTH' : 'E',
     'IS_NULLABLE' : 'F',

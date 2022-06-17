@@ -142,6 +142,7 @@ def addSheet(wb, table_row, column_rows, index_rows, craete_table_sql):
         row_index = start_column_idx + i
         ws[cell_config['COLUMN_NUMBER'] + str(row_index)] = column_row['ORDINAL_POSITION']
         ws[cell_config['COLUMN_NAME'] + str(row_index)] = column_row['COLUMN_NAME']
+        ws[cell_config['COLUMN_NAME_KOREAN'] + str(row_index)] = column_row['COLUMN_COMMENT']
         ws[cell_config['DATA_TYPE'] + str(row_index)] = column_row['DATA_TYPE']
         ws[cell_config['DATA_LENGTH'] + str(row_index)] = column_row['DATA_LENGTH']
         ws[cell_config['IS_NULLABLE'] + str(row_index)] = column_row['IS_NULLABLE']
